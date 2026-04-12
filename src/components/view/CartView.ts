@@ -1,43 +1,40 @@
-import { ensureElement } from "../../utils/utils";
 import { Component } from "../base/Component";
+import { ensureElement } from "../../utils/utils";
 import { IEvents } from "../base/Events";
 
-interface ICart {
-    total: number | string;
+interface ICartView {
     items: HTMLElement[];
+    total: number;
 }
-export class CartView extends Component<ICart> {
-    protected contentList: HTMLUListElement;
-    protected totalPrice: HTMLElement;
-    protected btnOrder: HTMLButtonElement;
+
+export class CartView extends Component<ICartView> {
+    private basketPrice: HTMLElement;
+    private orderBasket: HTMLButtonElement;
+    private basketList: HTMLElement;
 
     constructor (protected events: IEvents, container: HTMLElement) {
-         super(container);
-         this.contentList = ensureElement<HTMLUListElement>('.basket__list', this.container);
-         this.btnOrder = ensureElement<HTMLButtonElement>('.basket__button', this.container);
-         this.totalPrice = ensureElement<HTMLElement>('.basket__price', this.container);
-         this.items =[];
+        super(container);
 
-         this.btnOrder.addEventListener('click', () => this.events.emit('cart:order'));
+        this.basketList = ensureElement<HTMLElement>('.basket__list', this.container);
+        this.orderBasket = ensureElement<HTMLButtonElement>('.basket__button', this.container);
+        this.basketPrice = ensureElement<HTMLElement>('.basket__price', this.container);
+
+        this.orderBasket.addEventListener('click', () => {
+            this.events.emit('basket:checkout')
+        })
     }
 
-    set total (value: number) {
-        this.totalPrice.textContent = `${value} синапсов`;
+     set items(items: HTMLElement[]) {
+        this.basketList.innerHTML ='';
+        items.forEach(item => this.basketList.appendChild(item))
     }
 
-     set items (items: HTMLElement[]) {
-       if (items.length) {
-            this.contentList.replaceChildren(...items);
-        } else {
-            this.contentList.textContent = 'Корзина пуста';
-        }
+    set total(value: number) {
+        this.basketPrice.textContent = `${value} синапсов`;
     }
 
-    btnDisabled(total: number) {
-        this.btnOrder.disabled = total === 0;
+    set orderButtonDisabled (value: boolean) {
+        this.orderBasket.disabled = value;
     }
-    
 }
 
-
-    
