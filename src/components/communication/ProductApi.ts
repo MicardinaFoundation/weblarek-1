@@ -8,7 +8,7 @@ export class ProductApi{
        this._baseApi = baseApi;
     }
     getProduct(): Promise<IProductData> {
-        console.log("as")
+        //console.log("as")
         return this._baseApi.get<IProductData>('/product/')
         .then((data: IProductData) => data);
     }
