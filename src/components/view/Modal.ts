@@ -1,41 +1,62 @@
-import { ensureElement } from "../../utils/utils";
-import { Component } from "../base/Component";
+import { IEvents } from '../base/Events';
+import { ensureElement } from '../../utils/utils';
+import { Component } from '../base/Component';
 
 interface IModal {
     content: HTMLElement;
 }
-
 export class Modal extends Component<IModal> {
-    private modalCloseButton: HTMLButtonElement;
-    private modalContent: HTMLElement;
+    protected _content: HTMLElement;
+    protected btnClose: HTMLButtonElement;
+    protected isOpen: boolean = false;
+    protected activeClass = 'modal_active';
 
-    constructor(container: HTMLElement) {
+    constructor(protected events: IEvents, container: HTMLElement) {
         super(container);
-
-        this.modalCloseButton = ensureElement<HTMLButtonElement>('.modal__close', this.container);
-        this.modalContent = ensureElement<HTMLElement>('.modal__content', this.container);
-
-        this.modalCloseButton.addEventListener('click', () => {
-            this.close();
-    });
-        this.container.addEventListener('click', (event)=> {
-            if (event.target === this.container) {
-                this.close();
-            }
-        });
+        
+        this._content = ensureElement<HTMLElement>('.modal__content', this.container);
+        this.btnClose = ensureElement<HTMLButtonElement>('.modal__close', this.container);
+        
+        this.btnClose.addEventListener('click', this.close.bind(this));
+        this.container.addEventListener('click', this.handleClick.bind(this));
+        this._content.addEventListener('click', (evt) => evt.stopPropagation());
+        
+        this.escape = this.escape.bind(this);
     }
 
-    set content (value: HTMLElement) {
-        this.modalContent.innerHTML = '';
-        this.modalContent.appendChild(value);
-    }
-
-    open(): void {
-        this.container.classList.add('modal_active');
+    open(content: HTMLElement): void {
+        if (!content || this.isOpen) return;
+        
+        this._content.replaceChildren(content);
+        this.container.classList.add(this.activeClass);
+        document.addEventListener('keyup', this.escape);
+        this.isOpen = true;
+        
+        this.events.emit('modal:open');
     }
 
     close(): void {
-        this.container.classList.remove('modal_active');
+        if (!this.isOpen) return;
+        
+        this._content.innerHTML = '';
+        this.container.classList.remove(this.activeClass);
+        document.removeEventListener('keyup', this.escape);
+        this.isOpen = false;
+        
+        this.events.emit('modal:close');
     }
 
+    
+    handleClick(evt: MouseEvent): void {
+        
+        if (evt.target === this.container) {
+            this.close();
+        }
+    }
+
+    escape (evt: KeyboardEvent): void {
+        if (evt.key === 'Escape') {
+            this.close();
+        }
+    }
 }

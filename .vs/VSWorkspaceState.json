@@ -1,0 +1,13 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\src",
+    "\\src\\components",
+    "\\src\\components\\base",
+    "\\src\\components\\communication",
+    "\\src\\components\\models",
+    "\\src\\utils"
+  ],
+  "SelectedNode": "\\src\\utils\\constants.ts",
+  "PreviewInSolutionExplorer": false
+}

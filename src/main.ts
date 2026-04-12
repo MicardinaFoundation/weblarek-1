@@ -49,7 +49,7 @@ const formContacts = new ContactsForm(events, cloneTemplate(tmpContactsForm));
 const formOrder = new OrderForm(events, cloneTemplate(tmpOrderForm));
 
 events.on('model:cards updated', () => {
-    const cards = catalogData.getItems().map((item) => {
+    const cards = catalogData.getItems().map((item: any) => {
         const cardInstant = new CardCatalog(cloneTemplate(tmpCardCatalog), {
             onClick: () => events.emit('card:selected', item),
         });
@@ -210,5 +210,6 @@ api
         catalogData.setItems(initialCards);
     })
     .catch((err) => {
+        console.log("da");
         console.error(err);
     })
