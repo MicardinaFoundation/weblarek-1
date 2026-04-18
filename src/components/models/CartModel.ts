@@ -1,43 +1,44 @@
-import { IProduct } from "../../types";
-import { IEvents } from "../base/Events";
+import { IProduct } from '../../types';
+import { EventEmitter } from '../base/Events';
+
 export class CartModel {
-    protected _items: IProduct[] = [];
+    private _items: IProduct[] = [];
+    private events: EventEmitter;
 
-    constructor (protected events: IEvents) {};
-
-    hasItem(id: string | number): boolean {
-        return this._items.some(item => item.id === id);
+    constructor(events: EventEmitter) {
+        this.events = events;
     }
 
-    addItem(item: IProduct): void {
-        if(this.hasItem(item.id)) {
-            throw new Error(`Товар с ID ${item.id} уже добавлен!`);
-        }
-        const itemClone: IProduct = {...item, added: true};
-        this._items.push(itemClone);
-        this.events.emit('model:cart change');
+    getItems(): IProduct[] {
+        return this._items;
     }
 
-    deleteItem(id: string | number): void {
-        this._items = this._items.filter(item => item.id !== id);
-        this.events.emit('model:cart change');
+    addItem(product: IProduct): void {
+        this._items.push(product);
+        this.events.emit('cart:changed'); 
     }
 
-     get items() {
-      return this._items;
-   }
-
-    getTotalItem(): number {
-        return this._items.length;
+    removeItem(productId: string): void {
+        this._items = this._items.filter(item => item.id !== productId);
+        this.events.emit('cart:changed'); 
     }
-
-    getTotalPrice(): number {
-        return this._items.reduce((total, item) => total + (item.price ?? 0), 0);
-    };
 
     clear(): void {
         this._items = [];
-        this.events.emit('model:cart change');
+        this.events.emit('cart:changed'); 
     }
 
+    getTotal(): number {
+        return this._items.reduce((total, item) => {
+            return total + (item.price || 0);
+        }, 0);
+    }
+
+    getCount(): number {
+        return this._items.length;
+    }
+
+    contains(productId: string): boolean {
+        return this._items.some(item => item.id === productId);
+    }
 }

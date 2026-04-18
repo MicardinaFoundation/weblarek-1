@@ -1,73 +1,97 @@
-import { IBuyer} from "../../types";
-import { IEvents } from "../base/Events";
+import { IBuyer, ValidationResult } from '../../types';
+import { EventEmitter } from '../base/Events';
 
-export class BuyerModel implements IBuyer {
-    protected _payment: 'card' | 'cash' | '' = '';
-    protected _address: string ='';
-    protected _email: string = '';
-    protected _phone: string = '';
+export class BuyerModel {
+    private _data: Partial<IBuyer> = {};
+    private events: EventEmitter;
 
-    constructor (protected events: IEvents) {}
-
-    get buyer():IBuyer {
-        return {
-            payment: this._payment,
-            address: this._address,
-            email: this._email,
-            phone: this._phone,
-        };
+    constructor(events: EventEmitter) {
+        this.events = events;
     }
 
-    protected fieldValue(field: keyof IBuyer, value: any) {
- 
-    this[`_${field}`]= value;
- 
-    this.events.emit(`buyer:change`, {field});
- }
-
-    set payment(value: 'card' | 'cash' | '') {
-        this.fieldValue('payment', value);
+    setData(data: Partial<IBuyer>): void {
+        this._data = { ...this._data, ...data };
+        this.events.emit('buyer:changed');
     }
 
-     set address(value: string) {
-        this.fieldValue('address', value)
+    getData(): Partial<IBuyer> {
+        return this._data;
     }
 
-    set email(value: string) {
-        this.fieldValue('email', value)
+    clear(): void {
+        this._data = {};
+        this.events.emit('buyer:changed');
     }
 
-    set phone(value: string) {
-        this.fieldValue('phone', value)
-    }
+    validate(): ValidationResult {
+        const errors: ValidationResult = {};
 
-    resetBuyer(): void {
-        this.fieldValue('payment', '');
-        this.fieldValue('address', '');
-        this.fieldValue('email', '');
-        this.fieldValue('phone', '');
-    }
-
-    isValid(): Record<string, string> {
-        const errors: Record<string, string> = {};
-
-        if (!this._payment) {
-            errors.payment = 'Необходимо выбрать способ оплаты!';
+        if (!this._data.payment) {
+            errors.payment = 'Не выбран способ оплаты';
         }
 
-         if (!this._address) {
-            errors.address = 'Необходимо указать адрес доставки!';
+        if (!this._data.email || this._data.email.trim() === '') {
+            errors.email = 'Укажите email';
         }
 
-        if (!this._email) {
-            errors.email = 'Необходимо указать email!';
+        if (!this._data.phone || this._data.phone.trim() === '') {
+            errors.phone = 'Укажите телефон';
         }
 
-        if (!this._phone) {
-            errors.phone = 'Необходимо указать номер телефона!';
+        if (!this._data.address || this._data.address.trim() === '') {
+            errors.address = 'Укажите адрес доставки';
         }
 
         return errors;
     }
 
+    // методы для раздельной валидации
+    validateOrder(): ValidationResult {
+        const errors: ValidationResult = {};
+
+        if (!this._data.payment) {
+            errors.payment = 'Не выбран способ оплаты';
+        }
+
+        if (!this._data.address || this._data.address.trim() === '') {
+            errors.address = 'Укажите адрес доставки';
+        }
+
+        return errors;
+    }
+
+    validateContacts(): ValidationResult {
+        const errors: ValidationResult = {};
+
+        if (!this._data.email || this._data.email.trim() === '') {
+            errors.email = 'Укажите email';
+        }
+
+        if (!this._data.phone || this._data.phone.trim() === '') {
+            errors.phone = 'Укажите телефон';
+        }
+
+        return errors;
+    }
+
+    validateField(field: keyof IBuyer): string | null {
+        const value = this._data[field];
+
+        if (!value || (typeof value === 'string' && value.trim() === '')) {
+            switch (field) {
+                case 'payment':
+                    return 'Не выбран способ оплаты';
+                case 'email':
+                    return 'Укажите email';
+                case 'phone':
+                    return 'Укажите телефон';
+                case 'address':
+                    return 'Укажите адрес доставки';
+                default:
+                    return 'Поле обязательно для заполнения';
+            }
+        }
+
+        return null;
+    }
 }

@@ -1,45 +1,70 @@
+export type ApiPostMethods = 'POST' | 'PUT' | 'DELETE';
 
-export interface IOrderData {
-    items: (string | number)[];
-    total: number;
-    payment: 'card' | 'cash' | '';
-    address: string;
-    email: string;
-    phone: string;
+export interface IApi {
+    get<T extends object>(uri: string): Promise<T>;
+    post<T extends object>(uri: string, data: object, method?: ApiPostMethods): Promise<T>;
 }
 
-export interface IApiResponse {
-    id: string;
-    total: number;
-}
+// Интерфейсы данных
+export type TPayment = 'card' | 'cash';
 
 export interface IProduct {
-    id: string | number;
+    id: string;
     description: string;
     image: string;
     title: string;
     category: string;
     price: number | null;
-    added?: boolean;
 }
 
-export interface IProductData {
+export interface IBuyer {
+    payment: TPayment;
+    email: string;
+    phone: string;
+    address: string;
+}
+
+export type ValidationResult = {
+    payment?: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+}
+
+// Типы для API
+export interface IOrder {
+    payment: TPayment;
+    email: string;
+    phone: string;
+    address: string;
+    total: number;
+    items: string[];
+}
+
+export interface IOrderResult {
+    id: string;
+    total: number;
+}
+
+export interface IProductList {
     total: number;
     items: IProduct[];
 }
 
-export interface IBuyer {
-    payment: 'card' | 'cash' | '';
-    address: string;
-    email: string;
-    phone: string;
+// Класс ShopAPI
+export class ShopAPI {
+    protected api: IApi;
+
+    constructor(api: IApi) {
+        this.api = api;
+    }
+
+    async getProductList(): Promise<IProduct[]> {
+        const response = await this.api.get<IProductList>('/product/');
+        return response.items;
+    }
+
+    async createOrder(order: IOrder): Promise<IOrderResult> {
+        return await this.api.post<IOrderResult>('/order/', order);
+    }
 }
-
-export type TOrderFormValues = Pick<IBuyer, 'payment' | 'address'>;
-
-export type TContactsFormValues = Pick<IBuyer, 'email' | 'phone'>;
-
-  export interface IActions {
-	onClick: (event: MouseEvent) => void;
-}
-
